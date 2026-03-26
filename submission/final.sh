@@ -27,16 +27,16 @@ TEST_ADDRESS="mxqPaW7UH8F82R7dN6bsBbntnzFNbFYkMm"
 # =========================================================================
 # CHALLENGE 1: Transaction Decoding
 # =========================================================================
-TXID=$(bitcoin-cli decoderawtransaction "$BASE_TX" | jq -r '.txid')
+TXID=$(bitcoin-cli -regtest decoderawtransaction "$BASE_TX" | jq -r '.txid')
 check_cmd "Transaction decoding" "TXID" "$TXID"
 
-NUM_INPUTS=$(bitcoin-cli decoderawtransaction "$BASE_TX" | jq '.vin | length')
+NUM_INPUTS=$(bitcoin-cli -regtest decoderawtransaction "$BASE_TX" | jq '.vin | length')
 check_cmd "Input counting" "NUM_INPUTS" "$NUM_INPUTS"
 
-NUM_OUTPUTS=$(bitcoin-cli decoderawtransaction "$BASE_TX" | jq '.vout | length')
+NUM_OUTPUTS=$(bitcoin-cli -regtest decoderawtransaction "$BASE_TX" | jq '.vout | length')
 check_cmd "Output counting" "NUM_OUTPUTS" "$NUM_OUTPUTS"
 
-FIRST_OUTPUT_VALUE=$(bitcoin-cli decoderawtransaction "$BASE_TX" | jq '.vout[0].value * 100000000 | round')
+FIRST_OUTPUT_VALUE=$(bitcoin-cli -regtest decoderawtransaction "$BASE_TX" | jq '.vout[0].value * 100000000 | round')
 check_cmd "Output value extraction" "FIRST_OUTPUT_VALUE" "$FIRST_OUTPUT_VALUE"
 
 # =========================================================================
@@ -84,13 +84,13 @@ CHANGE_BTC=$(awk -v sats=$CHANGE_AMOUNT 'BEGIN { printf "%.8f", sats / 100000000
 TX_OUTPUTS="{\"$PAYMENT_ADDRESS\":$PAYMENT_BTC, \"$CHANGE_ADDRESS\":$CHANGE_BTC}"
 check_cmd "Output JSON creation" "TX_OUTPUTS" "$TX_OUTPUTS"
 
-RAW_TX=$(bitcoin-cli createrawtransaction "$TX_INPUTS" "$TX_OUTPUTS")
+RAW_TX=$(bitcoin-cli -regtest createrawtransaction "$TX_INPUTS" "$TX_OUTPUTS")
 check_cmd "Raw transaction creation" "RAW_TX" "$RAW_TX"
 
 # =========================================================================
 # CHALLENGE 5: Transaction Verification
 # =========================================================================
-DECODED_TX=$(bitcoin-cli decoderawtransaction "$RAW_TX")
+DECODED_TX=$(bitcoin-cli -regtest decoderawtransaction "$RAW_TX")
 check_cmd "Transaction decoding" "DECODED_TX" "$DECODED_TX"
 
 VERIFY_RBF=$(echo "$DECODED_TX" | jq -r '.vin[0].sequence < 4294967294')
@@ -114,16 +114,16 @@ fi
 SIMPLE_TX_INPUTS='[{"txid":"'$TXID'","vout":0,"sequence":4294967293}]'
 SIMPLE_TX_OUTPUTS='{"'$TEST_ADDRESS'":0.0001}'
 
-SIMPLE_RAW_TX=$(bitcoin-cli createrawtransaction "$SIMPLE_TX_INPUTS" "$SIMPLE_TX_OUTPUTS")
+SIMPLE_RAW_TX=$(bitcoin-cli -regtest createrawtransaction "$SIMPLE_TX_INPUTS" "$SIMPLE_TX_OUTPUTS")
 check_cmd "Simple transaction creation" "SIMPLE_RAW_TX" "$SIMPLE_RAW_TX"
 
 # =========================================================================
 # CHALLENGE 7: Child Transaction (CPFP)
 # =========================================================================
-PARENT_TXID=$(bitcoin-cli decoderawtransaction "$RAW_TX" | jq -r '.txid')
+PARENT_TXID=$(bitcoin-cli -regtest decoderawtransaction "$RAW_TX" | jq -r '.txid')
 check_cmd "Parent TXID extraction" "PARENT_TXID" "$PARENT_TXID"
 
-CHANGE_OUTPUT_INDEX=$(bitcoin-cli decoderawtransaction "$RAW_TX" | jq -r ".vout[] | select(.scriptPubKey.address == \"$CHANGE_ADDRESS\") | .n")
+CHANGE_OUTPUT_INDEX=$(bitcoin-cli -regtest decoderawtransaction "$RAW_TX" | jq -r ".vout[] | select(.scriptPubKey.address == \"$CHANGE_ADDRESS\") | .n")
 check_cmd "Change output identification" "CHANGE_OUTPUT_INDEX" "$CHANGE_OUTPUT_INDEX"
 
 CHILD_INPUTS="[{\"txid\":\"$PARENT_TXID\",\"vout\":$CHANGE_OUTPUT_INDEX}]"
@@ -144,13 +144,13 @@ CHILD_SEND_BTC=$(awk -v sats=$CHILD_SEND_AMOUNT 'BEGIN { printf "%.8f", sats / 1
 CHILD_OUTPUTS="{\"$CHILD_RECIPIENT\":$CHILD_SEND_BTC}"
 check_cmd "Child output creation" "CHILD_OUTPUTS" "$CHILD_OUTPUTS"
 
-CHILD_RAW_TX=$(bitcoin-cli createrawtransaction "$CHILD_INPUTS" "$CHILD_OUTPUTS")
+CHILD_RAW_TX=$(bitcoin-cli -regtest createrawtransaction "$CHILD_INPUTS" "$CHILD_OUTPUTS")
 check_cmd "Child transaction creation" "CHILD_RAW_TX" "$CHILD_RAW_TX"
 
 # =========================================================================
 # CHALLENGE 8: CSV Timelock
 # =========================================================================
-SECONDARY_TXID=$(bitcoin-cli decoderawtransaction "$SECONDARY_TX" | jq -r '.txid')
+SECONDARY_TXID=$(bitcoin-cli -regtest decoderawtransaction "$SECONDARY_TX" | jq -r '.txid')
 check_cmd "Secondary TXID extraction" "SECONDARY_TXID" "$SECONDARY_TXID"
 
 TIMELOCK_INPUTS="[{\"txid\":\"$SECONDARY_TXID\",\"vout\":0,\"sequence\":10}]"
@@ -158,7 +158,7 @@ check_cmd "Timelock input creation" "TIMELOCK_INPUTS" "$TIMELOCK_INPUTS"
 
 TIMELOCK_ADDRESS="bcrt1qxhy8dnae50nwkg6xfmjtedgs6augk5edj2tm3e"
 
-SECONDARY_OUTPUT_VALUE=$(bitcoin-cli decoderawtransaction "$SECONDARY_TX" | jq '.vout[0].value * 100000000 | round')
+SECONDARY_OUTPUT_VALUE=$(bitcoin-cli -regtest decoderawtransaction "$SECONDARY_TX" | jq '.vout[0].value * 100000000 | round')
 check_cmd "Secondary output value extraction" "SECONDARY_OUTPUT_VALUE" "$SECONDARY_OUTPUT_VALUE"
 
 TIMELOCK_FEE=1000
@@ -169,7 +169,7 @@ TIMELOCK_BTC=$(awk -v sats=$TIMELOCK_AMOUNT 'BEGIN { printf "%.8f", sats / 10000
 TIMELOCK_OUTPUTS="{\"$TIMELOCK_ADDRESS\":$TIMELOCK_BTC}"
 check_cmd "Timelock output creation" "TIMELOCK_OUTPUTS" "$TIMELOCK_OUTPUTS"
 
-TIMELOCK_TX=$(bitcoin-cli createrawtransaction "$TIMELOCK_INPUTS" "$TIMELOCK_OUTPUTS")
+TIMELOCK_TX=$(bitcoin-cli -regtest createrawtransaction "$TIMELOCK_INPUTS" "$TIMELOCK_OUTPUTS")
 check_cmd "Timelock transaction creation" "TIMELOCK_TX" "$TIMELOCK_TX"
 
 # =========================================================================
